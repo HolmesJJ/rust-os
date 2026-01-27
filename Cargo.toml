@@ -5,9 +5,14 @@ edition = "2024"
 
 [dependencies]
 
-# panic 时直接终止，因为没有实现堆栈展开的功能
-[profile.dev]
-panic = "abort"
+# -------------------------------------------------------------------------
+# 编译配置：这一部分对写 OS 至关重要！
+# -------------------------------------------------------------------------
 
+# 开发模式（ cargo build ）下的配置
+[profile.dev]
+panic = "abort"    # 当代码发生 panic（崩溃）时，直接终止程序
+
+# 发行模式（ cargo build --release ）下的配置
 [profile.release]
-panic = "abort"
+panic = "abort"    # 当代码发生 panic（崩溃）时，直接终止程序
