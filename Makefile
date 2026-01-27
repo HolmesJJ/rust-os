@@ -1,4 +1,5 @@
-# --- 变量定义：像 Rust 的变量一样，方便后面引用 ---
+# 一键编译、转换格式、运行 QEMU
+
 # 目标平台架构
 TARGET      := riscv64imac-unknown-none-elf
 # 编译模式（debug 或 release）
