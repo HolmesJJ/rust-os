@@ -21,7 +21,7 @@ OBJCOPY     := rust-objcopy --binary-architecture=riscv64
 # 默认目标：执行 build 会生成 .bin 文件
 build: $(BIN_FILE) 
 
-# 生成内核文档（方便你以后查看代码架构）
+# 生成内核文档（方便以后查看代码架构）
 doc:
 	@cargo doc --document-private-items
 
@@ -34,7 +34,7 @@ kernel:
 $(BIN_FILE): kernel
 	@$(OBJCOPY) $(KERNEL_FILE) --strip-all -O binary $@
 
-# 反汇编：如果你想看 Rust 代码变成了什么样的 RISC-V 汇编，用这个命令
+# 反汇编：如果想看 Rust 代码变成了什么样的 RISC-V 汇编，用这个命令
 asm:
 	@$(OBJDUMP) -d $(KERNEL_FILE) | less
 
