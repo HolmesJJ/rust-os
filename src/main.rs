@@ -8,9 +8,18 @@
 // 正常的 Rust 程序由运行时环境调用 main。
 #![no_main]
 
+// panic! 时，获取其中的信息并打印
+// #![feature(panic_info_message)]
+
 // --- 模块引用与内嵌汇编 ---
 use core::arch::asm;
 use core::arch::global_asm;
+
+// #[macro_use] 让 console.rs 里定义的 println! 宏在当前文件（及全局）可用
+#[macro_use]
+mod console;
+mod panic; // 引入我们写的 panic 处理逻辑，后面不再用`core::panic::PanicInfo`
+mod sbi;   // 引入 SBI 服务调用
 
 // 3. 嵌入之前写好的 entry.asm。
 // 这样编译器就会把汇编代码拼接到生成的二进制文件中。
@@ -18,14 +27,14 @@ global_asm!(include_str!("entry.asm"));
 
 // --- 核心功能：Panic 处理器 ---
 
-use core::panic::PanicInfo;
+// use core::panic::PanicInfo;
 
 // 4. 当代码发生致命错误（panic）时，Rust 会调用这个函数。
 // 因为没有 OS 处理错误，只能让 CPU 进入死循环。
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    loop {}
-}
+// #[panic_handler]
+// fn panic(_info: &PanicInfo) -> ! {
+//     loop {}
+// }
 
 // --- 底层通信：输出字符 ---
 
@@ -59,6 +68,10 @@ pub extern "C" fn rust_main() -> ! {
     console_putchar(b'O');
     console_putchar(b'K');
     console_putchar(b'\n');
+    // 通过 console 模块 -> sbi 模块 -> ecall 指令执行
+    println!("Hello rCore-Tutorial!");
+    // 测试：panic 宏 -> panic_handler -> 红色打印 -> 自动关机
+    panic!("end of rust_main");
     // 任务完成，进入死循环，防止跑飞
-    loop {}
+    // loop {}
 }
