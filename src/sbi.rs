@@ -5,7 +5,6 @@
 // --- 模块引用与内嵌汇编 ---
 use core::arch::asm;
 // SBI 调用核心函数：这是内核请求 OpenSBI 服务的唯一标准入口
-//
 // - which: 服务编号（Extension ID），放在 x17 寄存器
 // - arg0, arg1, arg2: 传递给服务的参数，分别放在 x10, x11, x12 寄存器
 #[inline(always)]
@@ -37,24 +36,26 @@ const SBI_REMOTE_SFENCE_VMA_ASID: usize = 7; // 远程地址映射刷新（带�
 const SBI_SHUTDOWN: usize = 8;               // 关闭操作系统（关机）
 
 // 向控制台输出一个字符
-//
 // 注意：参数 c 使用 usize 而非 char，是因为底层寄存器处理的是字长大小的数据
 pub fn console_putchar(c: usize) {
     sbi_call(SBI_CONSOLE_PUTCHAR, c, 0, 0);
 }
 
 // 从控制台中读取一个字符
-//
 // 如果当前缓冲区没有字符，通常返回 -1
 pub fn console_getchar() -> usize {
     sbi_call(SBI_CONSOLE_GETCHAR, 0, 0, 0)
 }
 
 // 调用 SBI_SHUTDOWN 来关闭操作系统
-//
 // -> ! 表示这个函数是“发散”的，即它永远不会返回（因为机器已经关了）
 pub fn shutdown() -> ! {
     sbi_call(SBI_SHUTDOWN, 0, 0, 0);
     // 如果关机指令执行完程序还没停，说明出大问题了，手动标记为不可达
     unreachable!()
+}
+
+// 设置下一次时钟中断的时间
+pub fn set_timer(time: usize) {
+    sbi_call(SBI_SET_TIMER, time, 0, 0);
 }

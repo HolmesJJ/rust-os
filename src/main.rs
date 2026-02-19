@@ -75,8 +75,10 @@ pub extern "C" fn rust_main() -> ! {
     unsafe {
         core::arch::asm!("ebreak");
     };
+    println!("Waiting for timer ticks... (Ctrl+A then X to exit)");
     // 测试：panic 宏 -> panic_handler -> 红色打印 -> 自动关机
-    panic!("end of rust_main");
-    // 任务完成，进入死循环，防止跑飞
-    // loop {}
+    // panic!("end of rust_main");
+    loop {
+        // CPU 在这里空转，等待时钟中断强行打断它。
+    }
 }

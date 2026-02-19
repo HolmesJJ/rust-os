@@ -5,6 +5,7 @@
 // 这告诉 Rust 编译器去寻找同目录下的 handler.rs 和 context.rs 文件
 mod handler;
 mod context;
+mod timer;
 
 // 初始化中断相关的子模块。
 // 这是整个中断模块的对外总入口。
@@ -13,8 +14,10 @@ mod context;
 pub fn init() {
     // 执行 handler 模块里的初始化逻辑。
     handler::init(); 
+    // 执行 timer 模块里的初始化逻辑。
+    timer::init();
 
     // 打印一条调试信息，确认中断模块已经成功挂载。
-    // 注意：这里的 println! 是你在 console.rs 里实现的宏。
+    // 注意：这里的 println! 是 console.rs 里实现的宏。
     println!("mod interrupt initialized");
 }

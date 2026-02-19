@@ -1,7 +1,7 @@
 use core::arch::global_asm;
 use super::context::Context;
 use riscv::register::stvec;
-use riscv::register::scause::Scause;
+use riscv::register::scause::{Scause, Trap, Exception, Interrupt};
 
 // 1. 嵌入汇编代码
 // 将 interrupt.asm 里的汇编指令直接拼接到这个模块生成的机器码中。
@@ -39,8 +39,43 @@ pub fn init() {
 // - scause:  原因寄存器。记录了是因为什么中断（比如断点、读写错误、时钟等）。
 // - stval:   附加信息。比如地址访问错误时，这里存的是那个错误的内存地址。
 #[unsafe(no_mangle)]
-pub fn handle_interrupt(_context: &mut Context, scause: Scause, _stval: usize) {
-    // 目前阶段，任何中断都会触发 panic 并打印原因
-    // scause.cause() 会告诉你具体发生了什么（例如 Exception::Breakpoint）
-    panic!("Interrupted: {:?}", scause.cause());
+pub fn handle_interrupt(context: &mut Context, scause: Scause, stval: usize) {
+    let cause = scause.cause();
+    // 可以通过 Debug 来查看发生了什么中断
+    println!("{:x?}", cause);
+    match cause {
+        // 断点中断（ebreak）
+        Trap::Exception(Exception::Breakpoint) => breakpoint(context),
+        // 时钟中断
+        // 修复：通过 super 调用同级目录下的 timer 模块
+        Trap::Interrupt(Interrupt::SupervisorTimer) => supervisor_timer(),
+        // 其他情况，调用故障处理
+        _ => fault(context, scause, stval),
+    }
+}
+
+// 处理 ebreak 断点
+// sepc 记录的是触发中断的指令地址。对于 ebreak，我们手动 +2 字节跳过它。
+// 在 RISC-V 中，ebreak 指令占 2 个字节。当 ebreak 触发中断时，sepc 指向的是 ebreak 本身。
+// 如果我们不手动 +2，中断返回后 CPU 又会执行 ebreak，导致陷入死循环。
+fn breakpoint(context: &mut Context) {
+    println!("Breakpoint at 0x{:x}", context.sepc);
+    context.sepc += 2;
+}
+
+// 处理时钟中断
+// 目前只会在 [`timer`] 模块中进行计数
+fn supervisor_timer() {
+    // 调用 timer 模块中的 tick 函数
+    super::timer::tick();
+}
+
+// 出现未能解决的异常
+fn fault(context: &mut Context, scause: Scause, stval: usize) {
+    panic!(
+        "Unresolved interrupt: {:?}\nContext: {:x?}\nstval: 0x{:x}",
+        scause.cause(),
+        context,
+        stval
+    );
 }

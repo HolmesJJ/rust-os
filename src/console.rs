@@ -1,13 +1,9 @@
 // 实现控制台的字符输入和输出
-//
 // # 格式化输出
-//
 // [`core::fmt::Write`] trait 包含
 // - 需要实现的 [`write_str`] 方法
 // - 自带实现，但依赖于 [`write_str`] 的 [`write_fmt`] 方法
-//
 // 我们声明一个类型，为其实现 [`write_str`] 方法后，就可以使用 [`write_fmt`] 来进行格式化输出
-//
 // [`write_str`]: core::fmt::Write::write_str
 // [`write_fmt`]: core::fmt::Write::write_fmt
 
@@ -41,9 +37,7 @@ impl Write for Stdout {
 }
 
 // 打印由 [`core::format_args!`] 格式化后的数据
-//
 // [`print!`] 和 [`println!`] 宏都将展开成此函数
-//
 // [`core::format_args!`]: https://doc.rust-lang.org/nightly/core/macro.format_args.html
 // 这个函数是 `print!` 和 `println!` 的真正后台，它接收复杂的 Arguments 对象
 pub fn print(args: fmt::Arguments) {
@@ -54,7 +48,6 @@ pub fn print(args: fmt::Arguments) {
 }
 
 // 实现类似于标准库中的 `print!` 宏
-//
 // 使用实现了 [`core::fmt::Write`] trait 的 [`console::Stdout`]
 #[macro_export]
 macro_rules! print {
@@ -67,7 +60,6 @@ macro_rules! print {
 }
 
 // 实现类似于标准库中的 `println!` 宏
-//
 // 使用实现了 [`core::fmt::Write`] trait 的 [`console::Stdout`]
 #[macro_export]
 macro_rules! println {
