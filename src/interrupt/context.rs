@@ -1,5 +1,5 @@
 // 引入 riscv 库中封装好的寄存器类型
-use riscv::register::{sstatus::Sstatus, scause::Scause};
+use riscv::register::sstatus::Sstatus;
 
 // Context：程序的瞬间快照
 // 当硬件中断（比如时钟中断或键盘输入）发生时，CPU 会强行停下当前正在运行的代码，转去执行“中断处理程序”。

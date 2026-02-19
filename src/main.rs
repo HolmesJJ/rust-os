@@ -20,6 +20,7 @@ use core::arch::global_asm;
 mod console;
 mod panic; // 引入我们写的 panic 处理逻辑，后面不再用`core::panic::PanicInfo`
 mod sbi;   // 引入 SBI 服务调用
+mod interrupt;
 
 // 3. 嵌入之前写好的 entry.asm。
 // 这样编译器就会把汇编代码拼接到生成的二进制文件中。
@@ -64,12 +65,16 @@ pub fn console_putchar(ch: u8) {
 // 6. extern "C"：使用 C 语言的函数调用约定，确保汇编和 Rust 能正常传递参数。
 #[unsafe(no_mangle)]
 pub extern "C" fn rust_main() -> ! {
+    interrupt::init();
     // 调用上面定义的函数，在屏幕上打印 "OK"
     console_putchar(b'O');
     console_putchar(b'K');
     console_putchar(b'\n');
     // 通过 console 模块 -> sbi 模块 -> ecall 指令执行
     println!("Hello rCore-Tutorial!");
+    unsafe {
+        core::arch::asm!("ebreak");
+    };
     // 测试：panic 宏 -> panic_handler -> 红色打印 -> 自动关机
     panic!("end of rust_main");
     // 任务完成，进入死循环，防止跑飞
