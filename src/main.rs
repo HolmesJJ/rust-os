@@ -11,6 +11,12 @@
 // panic! 时，获取其中的信息并打印
 // #![feature(panic_info_message)]
 
+// 开启对分配错误处理器的支持（对应 heap.rs 里的 #[alloc_error_handler]）
+#![feature(alloc_error_handler)]
+
+// 在 no_std 下使用 Box/Vec 必须手动声明这个 crate
+extern crate alloc;
+
 // --- 模块引用与内嵌汇编 ---
 use core::arch::asm;
 use core::arch::global_asm;
@@ -21,6 +27,7 @@ mod console;
 mod panic; // 引入我们写的 panic 处理逻辑，后面不再用`core::panic::PanicInfo`
 mod sbi;   // 引入 SBI 服务调用
 mod interrupt;
+mod memory;
 
 // 3. 嵌入之前写好的 entry.asm。
 // 这样编译器就会把汇编代码拼接到生成的二进制文件中。
@@ -60,18 +67,42 @@ pub fn console_putchar(ch: u8) {
     }
 }
 
+// 动态内存分配测试函数
+fn test_heap() {
+    use alloc::boxed::Box;
+    use alloc::vec::Vec;
+    // 测试 Box：将数字存入堆中
+    let v = Box::new(5);
+    assert_eq!(*v, 5);
+    core::mem::drop(v); // 手动释放，验证分配器是否会由于频繁分配而崩坏
+    // 测试 Vec：大规模动态增长
+    let mut vec = Vec::new();
+    for i in 0..10000 {
+        vec.push(i);
+    }
+    // 验证数据的完整性
+    assert_eq!(vec.len(), 10000);
+    for (i, value) in vec.into_iter().enumerate() {
+        assert_eq!(value, i);
+    }
+    println!("Heap test passed! (Allocated and verified 10000 items)");
+}
+
 // --- 内核入口函数 ---
 // 5. #[unsafe(no_mangle)]：告诉编译器不要混淆函数名，确保汇编能通过 "rust_main" 找到它。
 // 6. extern "C"：使用 C 语言的函数调用约定，确保汇编和 Rust 能正常传递参数。
 #[unsafe(no_mangle)]
 pub extern "C" fn rust_main() -> ! {
+    // 初始化各种模块
     interrupt::init();
+    memory::init();
     // 调用上面定义的函数，在屏幕上打印 "OK"
     console_putchar(b'O');
     console_putchar(b'K');
     console_putchar(b'\n');
     // 通过 console 模块 -> sbi 模块 -> ecall 指令执行
     println!("Hello rCore-Tutorial!");
+    test_heap();
     unsafe {
         core::arch::asm!("ebreak");
     };
