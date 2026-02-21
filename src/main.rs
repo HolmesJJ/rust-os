@@ -107,6 +107,10 @@ pub extern "C" fn rust_main() -> ! {
         core::arch::asm!("ebreak");
     };
     println!("Waiting for timer ticks... (Ctrl+A then X to exit)");
+    unsafe {
+        // ld 指令，读取 0 寄存器（值为 0）指向的内存，尝试去加载 0x0 地址的数据，触发 LoadFault。
+        core::arch::asm!("ld t0, (x0)"); 
+    };
     // 测试：panic 宏 -> panic_handler -> 红色打印 -> 自动关机
     // panic!("end of rust_main");
     loop {

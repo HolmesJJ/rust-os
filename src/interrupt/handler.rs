@@ -45,22 +45,35 @@ pub fn handle_interrupt(context: &mut Context, scause: Scause, stval: usize) {
     println!("{:x?}", cause);
     match cause {
         // 断点中断（ebreak）
-        Trap::Exception(Exception::Breakpoint) => breakpoint(context),
+        Trap::Exception(Exception::Breakpoint) => breakpoint(context, 2),
+        // 捕获非法内存访问 (LoadFault)
+        // 当程序尝试读取非法地址（如 0x0）时，硬件会触发这个异常
+        Trap::Exception(Exception::LoadFault) => {
+            // stval 记录了触发异常的那个非法地址
+            if stval == 0x0 {
+                println!("SUCCESS!");
+            }
+            breakpoint(context, 4);
+        },
         // 时钟中断
-        // 修复：通过 super 调用同级目录下的 timer 模块
+        // 通过 super 调用同级目录下的 timer 模块
         Trap::Interrupt(Interrupt::SupervisorTimer) => supervisor_timer(),
         // 其他情况，调用故障处理
         _ => fault(context, scause, stval),
     }
 }
 
+
 // 处理 ebreak 断点
 // sepc 记录的是触发中断的指令地址。对于 ebreak，我们手动 +2 字节跳过它。
-// 在 RISC-V 中，ebreak 指令占 2 个字节。当 ebreak 触发中断时，sepc 指向的是 ebreak 本身。
+// 在 RISC-V 中
+// ebreak 指令占 2 个字节。当 ebreak 触发中断时，sepc 指向的是 ebreak 本身。
 // 如果我们不手动 +2，中断返回后 CPU 又会执行 ebreak，导致陷入死循环。
-fn breakpoint(context: &mut Context) {
+// main.rs 中的 `ld t0, (x0)` 是一条 4 字节指令，
+// 我们必须手动将 sepc 增加 4，才能跳过它执行下一条语句。
+fn breakpoint(context: &mut Context, offset: usize) {
     println!("Breakpoint at 0x{:x}", context.sepc);
-    context.sepc += 2;
+    context.sepc += offset;
 }
 
 // 处理时钟中断
