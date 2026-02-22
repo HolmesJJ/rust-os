@@ -16,6 +16,8 @@
 
 // 在 no_std 下使用 Box/Vec 必须手动声明这个 crate
 extern crate alloc;
+// 显式链接 lazy_static 库
+extern crate lazy_static;
 
 // --- 模块引用与内嵌汇编 ---
 use core::arch::asm;
@@ -102,6 +104,12 @@ pub extern "C" fn rust_main() -> ! {
     console_putchar(b'\n');
     // 通过 console 模块 -> sbi 模块 -> ecall 指令执行
     println!("Hello rCore-Tutorial!");
+    // DRAM 起始地址：0x80000000（也就是 2,147,483,648）。
+    // 内核加载地址：通常 OpenSBI 把内核加载在 0x80200000。
+    // 内核结束地址：0x809D0AD8。
+    // 内核（包括代码、数据、栈空间）一共占用了大约 7.8 MB （KERNEL_HEAP_SIZE 为 8 MB）的内存空间（即 0x809D0AD8 减去 0x80200000）。
+    use alloc::format;
+    println!("| Kernel boundary: {:<20} |", format!("{:?}", *memory::config::KERNEL_END_ADDRESS));
     test_heap();
     unsafe {
         core::arch::asm!("ebreak");
